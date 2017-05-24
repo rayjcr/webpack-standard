@@ -2,15 +2,56 @@
 const path = require('path'); // 导入路径包
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CommonsChunkPlugin = require('webpack/lib/optimize/CommonsChunkPlugin');
+
+var fs = require('fs');
+
+
+var fileObj = {};
+
+//遍历./src下所有文件。。所有的js文件都添加到fileObj对象中。实时监控js的变化
+function ls(ff){
+    var files = fs.readdirSync(ff);
+    for (var fn in files) {
+        var fname = ff+path.sep+files[fn]; 
+        var stat = fs.lstatSync(fname);  
+        if(stat.isDirectory() == true)  
+        {  
+            ls(fname);  
+        }  
+        else  
+        {  
+            var _index = isJsSuffix(files[fn]);
+            if (_index > -1) {
+                fileObj[files[fn].slice(0, _index)] = fname;
+            }
+        }  
+        // console.log("----------------------")
+        // console.log(fileObj)
+    }
+}
+
+function isJsSuffix(filename) {
+    var _index = filename.lastIndexOf('.');
+    
+    if (filename.slice(_index + 1) === 'js') {
+        return _index;
+    }
+    return -1;
+}
+
+ls('./src')
 
 module.exports = {
-    devtool: 'eval-source-map', //开启sourceMap便于调试
-    entry: './src/main.js', //入口文件
+    //devtool: 'eval-source-map', //开启sourceMap便于调试
+    entry:fileObj, //入口文件
     output: {
-        path: path.resolve(__dirname, 'build'), // 指定打包之后的文件夹
-        // publicPath: '/assets/', //指定资源文件引用的目录
+        path: path.resolve(__dirname, 'dist/js'), // 指定打包之后的文件夹
+        //publicPath: '/assets/', //指定资源文件引用的目录
+        publicPath: '/dist/js',      //资源目录很重要。dev的时候用
         // filename: 'bundle.js' // 指定打包为一个文件 bundle.js
-        filename: '[name].js' // 可以打包为多个文件
+        filename: '[name].js', // 可以打包为多个文件
+        chunkFilename:'[name].js'
     },
     // 使用loader模块
     module: {
@@ -67,6 +108,16 @@ module.exports = {
         new HtmlWebpackPlugin({
             template: './index.html' // 模版文件
         }),
+        //提取公共部分
+        new CommonsChunkPlugin({
+            name: 'commons',
+            filename: 'commons.min.js',
+        }),
+        // new HtmlWebpackPlugin({
+        //     template: './src/rxjs/rxjs.html'
+        // }),
+
+        //--config ./webpack.production.config.js
         new webpack.HotModuleReplacementPlugin() // 热加载插件
     ]
 }

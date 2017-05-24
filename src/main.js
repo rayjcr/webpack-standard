@@ -1,3 +1,5 @@
-import xx from './rxjs/rxjs.js'
+import xx from './test/test.js'
 
-console.log('这里是入口js...');
+
+
+console.log('这里是入2222口js...');
